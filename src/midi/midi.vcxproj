@@ -266,6 +266,8 @@
     <ClCompile Include="tests\02-midi\04-mtrk\12-mtrk-pitch-wheel-tests.cpp" />
     <ClCompile Include="tests\02-midi\04-mtrk\13-mtrk-multiple-events-tests.cpp" />
     <ClCompile Include="tests\02-midi\05-notes\01-note-tests.cpp" />
+    <ClCompile Include="tests\02-midi\05-notes\02-channel-note-collector-tests.cpp" />
+    <ClCompile Include="tests\02-midi\05-notes\03-event-multicaster-tests.cpp" />
     <ClCompile Include="tests\tests.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

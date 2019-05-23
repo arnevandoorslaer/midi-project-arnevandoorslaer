@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <istream>
 #include <ostream>
+#include <functional>
+#include <vector>
 #include "primitives.h"
 
 namespace midi {
@@ -68,20 +70,8 @@ namespace midi {
 
 		}
 
-		bool operator ==(const NOTE other) const{
-			return this->note_number == other.note_number &&
-				this->start == other.start &&
-				this->duration == other.duration &&
-				this->velocity == other.velocity &&
-				this->instrument == other.instrument;
-		}
-		bool operator !=(const NOTE other) const{
-			return this->note_number != other.note_number &&
-				this->start != other.start &&
-				this->duration != other.duration &&
-				this->velocity != other.velocity &&
-				this->instrument != other.instrument;
-		}
+		bool operator ==(const NOTE other) const;
+		bool operator !=(const NOTE other) const;
 
 	};
 
@@ -93,6 +83,57 @@ namespace midi {
 			note.duration << ",instrument=" <<
 			note.instrument << ")";
 	}
+
+	struct ChannelNoteCollector : public  EventReceiver {
+		Channel channel;
+		std::function<void(const NOTE&)> note_receiver;
+		Instrument instrument = Instrument(0);
+		Time current = Time(0);
+		Time start[128];
+		uint16_t velocities[128];
+
+
+		ChannelNoteCollector(Channel ch,
+			std::function<void(const NOTE&)> note_receiver) :
+			channel(ch), note_receiver(note_receiver) {
+
+			for (uint16_t& v : velocities) {
+				v = 128;
+			}
+		}
+
+		// Inherited via EventReceiver
+		virtual void note_on(Duration dt, Channel channel, NoteNumber note, uint8_t velocity) override;
+		virtual void note_off(Duration dt, Channel channel, NoteNumber note, uint8_t velocity) override;
+		virtual void polyphonic_key_pressure(Duration dt, Channel channel, NoteNumber note, uint8_t pressure) override;
+		virtual void control_change(Duration dt, Channel channel, uint8_t controller, uint8_t value) override;
+		virtual void program_change(Duration dt, Channel channel, Instrument program) override;
+		virtual void channel_pressure(Duration dt, Channel channel, uint8_t pressure) override;
+		virtual void pitch_wheel_change(Duration dt, Channel channel, uint16_t value) override;
+		virtual void meta(Duration dt, uint8_t type, std::unique_ptr<uint8_t[]> data, uint64_t data_size) override;
+		virtual void sysex(Duration dt, std::unique_ptr<uint8_t[]> data, uint64_t data_size) override;
+	};
+
+	struct EventMulticaster : public EventReceiver {
+		std::vector<std::shared_ptr<EventReceiver>> receivers;
+
+		EventMulticaster(std::vector<std::shared_ptr<EventReceiver>> receivers) :
+			receivers(receivers) {
+
+		}
+
+		// Inherited via EventReceiver
+		virtual void note_on(Duration dt, Channel channel, NoteNumber note, uint8_t velocity) override;
+		virtual void note_off(Duration dt, Channel channel, NoteNumber note, uint8_t velocity) override;
+		virtual void polyphonic_key_pressure(Duration dt, Channel channel, NoteNumber note, uint8_t pressure) override;
+		virtual void control_change(Duration dt, Channel channel, uint8_t controller, uint8_t value) override;
+		virtual void program_change(Duration dt, Channel channel, Instrument program) override;
+		virtual void channel_pressure(Duration dt, Channel channel, uint8_t pressure) override;
+		virtual void pitch_wheel_change(Duration dt, Channel channel, uint16_t value) override;
+		virtual void meta(Duration dt, uint8_t type, std::unique_ptr<uint8_t[]> data, uint64_t data_size) override;
+		virtual void sysex(Duration dt, std::unique_ptr<uint8_t[]> data, uint64_t data_size) override;
+	};
+
 }
 
 #endif
