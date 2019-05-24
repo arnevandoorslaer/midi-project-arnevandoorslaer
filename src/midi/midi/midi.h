@@ -1,9 +1,8 @@
-#pragma pack(push,1)
+
 #ifndef MIDI_H
 #define MIDI_H
 
 #include <cstdint>
-#include <istream>
 #include <ostream>
 #include <functional>
 #include <vector>
@@ -19,12 +18,15 @@ namespace midi {
 
 	std::string header_id(CHUNK_HEADER);
 
+
+#pragma pack(push,1)
 	struct MTHD {
 		CHUNK_HEADER header;
 		uint16_t type;
 		uint16_t ntracks;
 		uint16_t division;
 	};
+#pragma pack(pop)
 
 	void read_mthd(std::istream&, MTHD*);
 
@@ -134,7 +136,40 @@ namespace midi {
 		virtual void sysex(Duration dt, std::unique_ptr<uint8_t[]> data, uint64_t data_size) override;
 	};
 
+	struct NoteCollector : EventReceiver
+	{
+	public:
+		EventMulticaster multicaster;
+		std::function<void(const NOTE&)> receiver;
+
+		static std::vector<std::shared_ptr<EventReceiver>>
+			create_list(std::function<void(const NOTE&)> receiver){
+			std::vector<std::shared_ptr<EventReceiver>> receivers;
+			for (int channel = 0; channel < 16; channel++)
+			{
+				auto ptr = std::make_shared<ChannelNoteCollector>
+					(Channel(channel), receiver);
+				receivers.push_back(ptr);
+			}
+			return receivers;
+		}
+
+		NoteCollector(std::function<void(const NOTE&)> receiver) :
+			receiver(receiver), multicaster(create_list(receiver)) { }
+
+		// Inherited via EventReceiver
+		virtual void note_on(Duration dt, Channel channel, NoteNumber note, uint8_t velocity) override;
+		virtual void note_off(Duration dt, Channel channel, NoteNumber note, uint8_t velocity) override;
+		virtual void polyphonic_key_pressure(Duration dt, Channel channel, NoteNumber note, uint8_t pressure) override;
+		virtual void control_change(Duration dt, Channel channel, uint8_t controller, uint8_t value) override;
+		virtual void program_change(Duration dt, Channel channel, Instrument program) override;
+		virtual void channel_pressure(Duration dt, Channel channel, uint8_t pressure) override;
+		virtual void pitch_wheel_change(Duration dt, Channel channel, uint16_t value) override;
+		virtual void meta(Duration dt, uint8_t type, std::unique_ptr<uint8_t[]> data, uint64_t data_size) override;
+		virtual void sysex(Duration dt, std::unique_ptr<uint8_t[]> data, uint64_t data_size) override;
+	};
+
+	std::vector<NOTE> read_notes(std::istream&);
 }
 
 #endif
-#pragma pack(pop)

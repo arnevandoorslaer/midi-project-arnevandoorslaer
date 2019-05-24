@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -206,6 +206,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="app.h" />
     <ClInclude Include="Catch.h" />
     <ClInclude Include="easylogging++.h" />
     <ClInclude Include="imaging\bitmap.h" />
@@ -268,6 +269,8 @@
     <ClCompile Include="tests\02-midi\05-notes\01-note-tests.cpp" />
     <ClCompile Include="tests\02-midi\05-notes\02-channel-note-collector-tests.cpp" />
     <ClCompile Include="tests\02-midi\05-notes\03-event-multicaster-tests.cpp" />
+    <ClCompile Include="tests\02-midi\05-notes\04-note-collector-tests.cpp" />
+    <ClCompile Include="tests\02-midi\05-notes\05-read-notes-tests.cpp" />
     <ClCompile Include="tests\tests.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

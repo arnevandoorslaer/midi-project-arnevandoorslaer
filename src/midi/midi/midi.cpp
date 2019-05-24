@@ -173,7 +173,7 @@ namespace midi {
 			if (this->channel == channel) {
 				if (this->velocities[value(note)] != 128) {
 					this->note_off(Duration(0), channel, note, velocity);
-				}	
+				}
 				this->start[value(note)] = this->current;
 				this->velocities[value(note)] = velocity;
 			}
@@ -186,12 +186,12 @@ namespace midi {
 	{
 		this->current += dt;
 		if (this->channel == channel) {
-			NOTE n = NOTE(note, this->start[value(note)], 
-				Duration(this->current - this->start[value(note)]), 
-				this->velocities[value(note)], 
+			NOTE n = NOTE(note, this->start[value(note)],
+				Duration(this->current - this->start[value(note)]),
+				this->velocities[value(note)],
 				this->instrument);
 			this->note_receiver(n);
-			this->velocities[value(note)] = -1;
+			this->velocities[value(note)] = 128;
 		}
 	}
 
@@ -289,7 +289,7 @@ namespace midi {
 	void EventMulticaster::meta(Duration dt, uint8_t type, std::unique_ptr<uint8_t[]> data, uint64_t data_size)
 	{
 		for (std::shared_ptr<EventReceiver> receiver : this->receivers) {
-			receiver->meta(dt, type, std::move(data),data_size);
+			receiver->meta(dt, type, std::move(data), data_size);
 		}
 	}
 
@@ -300,4 +300,62 @@ namespace midi {
 		}
 	}
 
+	void NoteCollector::note_on(Duration dt, Channel channel, NoteNumber note, uint8_t velocity)
+	{
+		this->multicaster.note_on(dt, channel, note, velocity);
+	}
+
+	void NoteCollector::note_off(Duration dt, Channel channel, NoteNumber note, uint8_t velocity)
+	{
+		this->multicaster.note_off(dt, channel, note, velocity);
+	}
+
+	void NoteCollector::polyphonic_key_pressure(Duration dt, Channel channel, NoteNumber note, uint8_t pressure)
+	{
+		this->multicaster.polyphonic_key_pressure(dt, channel, note, pressure);
+	}
+
+	void NoteCollector::control_change(Duration dt, Channel channel, uint8_t controller, uint8_t value)
+	{
+		this->multicaster.control_change(dt, channel, controller, value);
+	}
+
+	void NoteCollector::program_change(Duration dt, Channel channel, Instrument program)
+	{
+		this->multicaster.program_change(dt, channel, program);
+	}
+
+	void NoteCollector::channel_pressure(Duration dt, Channel channel, uint8_t pressure)
+	{
+		this->multicaster.channel_pressure(dt, channel, pressure);
+	}
+
+	void NoteCollector::pitch_wheel_change(Duration dt, Channel channel, uint16_t value)
+	{
+		this->multicaster.pitch_wheel_change(dt, channel, value);
+	}
+
+	void NoteCollector::meta(Duration dt, uint8_t type, std::unique_ptr<uint8_t[]> data, uint64_t data_size)
+	{
+		this->multicaster.meta(dt, type, std::move(data), data_size);
+	}
+
+	void NoteCollector::sysex(Duration dt, std::unique_ptr<uint8_t[]> data, uint64_t data_size)
+	{
+		this->multicaster.sysex(dt, std::move(data), data_size);
+	}
+	std::vector<NOTE> read_notes(std::istream& in)
+	{
+		MTHD methhead;
+		read_mthd(in, &methhead);
+		std::vector<NOTE> notes;
+		for (int i = 0; i < methhead.ntracks; i++)
+		{
+			NoteCollector collector =
+				NoteCollector([&notes](const NOTE& note)
+			{ notes.push_back(note); });
+			read_mtrk(in, collector);
+		}
+		return notes;
+	}
 }
