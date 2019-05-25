@@ -69,8 +69,8 @@ int getMaxNoteNumber(vector<NOTE>& notes) {
 
 int main(int argn, char* argv[])
 {
-	string file = "C:\\Users\\ArneWIN\\Downloads\\midi-samples\\trololo.mid";
-	string outfile = "C:\\Users\\ArneWIN\\Documents\\bitmaps\\frame%d.bmp";
+	string file = ".\\tmp\\12-notes.mid";
+	string outfile = ".\\tmp\\bitmaps\\frame%d.bmp";
 	uint32_t frame_width = 0;
 	uint32_t step = 1;
 	uint32_t scale = 10;
